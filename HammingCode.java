@@ -1,107 +1,105 @@
 import java.util.Arrays;
 
-public class HammingCode {
-
+public class HammingCode{
     public static void main(String[] args){
         String data = "110011";
 
-        String HammingCode = HammingCode(data);
+        String hammingCode = getHammingCode(data);
+        System.out.println("Hamming Code of " + data  + " is: " + hammingCode );
 
-        System.out.println("Hamming Code of " + data + " is: " + HammingCode);
-
-        boolean result = checkHammingCode(HammingCode);
-        System.out.println("Code :" + HammingCode + "is : " + result);
+        boolean flag = checkHammingCode(hammingCode);
+        System.out.println("Hamming Code is : " + flag);
     }
 
-    private static boolean checkHammingCode(String hammingCode) {
-        int spots = AmtofSpots(hammingCode) - 1;
+    private static boolean checkHammingCode(String data) {
+        int parityAmt = AmtofParity(data);
 
-        int[][] bitMatrix = new int[hammingCode.length()][spots + 1];
-        bitMatrix = BitMatrixMaker(bitMatrix);
-
-        int[] dataArray = new int[hammingCode.length()];
-        for(int index = 0; index < dataArray.length; index++){
-            dataArray[index] = Character.getNumericValue(hammingCode.charAt(index));
+        int[] dataArray = new int[data.length()];
+        for(int index = 0; index < dataArray.length ; index++) {
+            dataArray[index] = Character.getNumericValue(data.charAt(index));
         }
 
-        for(int index = 0; index < dataArray.length; index++){
-            if(isPowerOfTwo(index + 1)){
-                boolean flag = checkEvenParity(index, bitMatrix);
-                if(flag == true && dataArray[index] != 0) return false;
-                else if(flag == false && dataArray[index] != 1) return false;
+        int[][] bitMatrix = new int[dataArray.length][parityAmt];
+        bitMatrix = bitMatrixMaker(bitMatrix);
+
+
+        for(int index = 0, i = 0; index < dataArray.length ; index++) {
+            if(powerOfTwo(index + 1)){
+                int correctValue = checkParityValue(bitMatrix, (int) (Math.log(index + 1)/Math.log(2)) );
+                System.out.println("Correct Value " + correctValue + " DataArray[" + dataArray[index] + "] ");
+                if(correctValue != dataArray[index]){
+                    return false;
+                }
             }
         }
-
         return true;
     }
 
-    public static String HammingCode(String data){
-        int spots = AmtofSpots(data);
-        int[] dataArray = new int[spots + data.length()  ];
+    private static String getHammingCode(String data) {
+        int parityAmt = AmtofParity(data);
 
-        int i = 0;
+        int[] dataArray = new int[data.length() + parityAmt];
 
-        int[][] bitMatrix = new int[dataArray.length][spots + 1];
-        bitMatrix = BitMatrixMaker(bitMatrix);
+        int[][] bitMatrix = new int[dataArray.length][parityAmt + 1];
+        bitMatrix = bitMatrixMaker(bitMatrix);
 
-        for(int index = 0; index < dataArray.length; index++){
-            if(isPowerOfTwo(index + 1)){
-                boolean flag = checkEvenParity(index, bitMatrix);
-                if(flag)   dataArray[index] = 0;
-                else dataArray[index] = 1;
-
+        for(int index = 0, i = 0; index < dataArray.length ; index++) {
+            if(powerOfTwo(index + 1)){
+                dataArray[index] = checkParityValue(bitMatrix, (int) (Math.log(index+1)/Math.log(2)) );
             }else{
-                dataArray[index] =  Character.getNumericValue(data.charAt(i));
-                i++;
+                dataArray[index] = Character.getNumericValue(data.charAt(i++));
             }
         }
-
-        String result = "";
+        data = "";
         for(int num : dataArray){
-            result += num;
+            data += num;
         }
-        return result;
 
+        return data;
     }
-    private static boolean checkEvenParity(int index, int[][] bitMatrix) {
-        boolean flag = false;
-        index += 1;
-        int Rvalue = (int) (Math.log(index) / Math.log(2));
-        index = 4 - Rvalue;
+
+    private static int checkParityValue(int[][] bitMatrix, int index) {
         int counter = 0;
-        for(int x = 0; x < bitMatrix.length ; x++){
-                if(bitMatrix[x][index] == 1) counter++;
+        int y = bitMatrix[0].length;
+        for (int[] matrix : bitMatrix) {
+            if (matrix[y - index - 1] == 1) {
+                counter++;
+            }
         }
-        return (counter % 2 == 0);
+        if(counter % 2 == 0){
+            return 0;
+        }else{
+            return 1;
+        }
     }
 
-    private static int[][] BitMatrixMaker(int[][] bitMatrix) {
+    private static boolean powerOfTwo(int n) {
+        return ((n & (n-1)) == 0);
+    }
+
+    private static int[][] bitMatrixMaker(int[][] bitMatrix) {
         int row = 1;
         for(int x = 0; x < bitMatrix.length ; x++){
-            for(int y = 0; y < bitMatrix[x].length; y++){
-                if(y == 0){
-                    bitMatrix[x][y] = row++;
+            for(int y = 0; y < bitMatrix[x].length ; y++) {
+                if (y == 0) {
+                    bitMatrix[x][0] = row++;
+                } else {
+                    bitMatrix[x][y] = (bitMatrix[x][0] >> (4 - y)) & 1 ;
                 }
-                else{
-                    bitMatrix[x][y] = (bitMatrix[x][0] >> (4 - y)) & 1;
-                }
-            }
+            };
         }
 
         return bitMatrix;
     }
 
-    private static boolean isPowerOfTwo(int n) {
-        return (n > 0) && ((n & (n - 1)) == 0);
-    }
-
-    static int AmtofSpots(String data){
-        int i = 0;
-        int value = (int) Math.pow(2,i);
-        while(value < data.length()){
-            value = (int) Math.pow(2,i++);
+    private static int AmtofParity(String data) {
+        int cnt = 0;
+        while (true){
+            if(Math.pow(2, cnt) > data.length()){
+                return cnt + 1;
+            }else{
+                cnt++;
+            }
         }
-        return i;
     }
-
 }
